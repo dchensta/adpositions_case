@@ -33,6 +33,9 @@ class BERTFeaturizer(Featurizer):
         # Predict hidden states features for each layer.
 
         for input_tok_ids, input_mask, input_seq_ids in feature_loader:
+            output = self.model(input_tok_ids, token_type_ids=input_seq_ids, attention_mask=input_mask)
+            print(type(output))
+            print(len(output))
             all_encoder_layers, _ = self.model(
                 input_tok_ids, token_type_ids=input_seq_ids, attention_mask=input_mask)
             doc_embeds.append(all_encoder_layers[11][:, 0, :].detach())

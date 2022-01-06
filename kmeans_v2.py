@@ -88,15 +88,31 @@ if __name__ == "__main__" :
     data = reformatData(data)
     '''
 
-    data_file = "adpositions_only/pp_x_tensor.pt"
-    labels_file = "adpositions_only/pp_final_labels.csv"
+    model_name = input("FinBERT, LatinBERT, or mBERT?: ")
+    if model_name == "FinBERT" :
+        data_file = "finbert_adpositions_only/pp_x_tensor.pt"
+        labels_file = "finbert_adpositions_only/pp_final_labels.csv"
+    elif model_name == "mBERT" :
+        data_file = "mbert_adpositions_only/pp_x_tensor.pt"
+        labels_file = "mbert_adpositions_only/pp_final_labels.csv"
     labels = getLabels(labels_file)
 
     tensor = torch.load(data_file)
     data = tensor.cpu().detach().numpy() #SOURCE: https://stackoverflow.com/questions/49768306/pytorch-tensor-to-numpy-array
+    
+    #reshape data, remove the dimension that has the weird 6 (1th dimension)
+    if ui == "FinBERT" :
+        print("Reshaping output of MaskedLMModel (FinBERT)... ")
+        print("original data shape: ", data.shape)
+        data = data.reshape(data.shape[0], data.shape[1]*data.shape[2])
+        print("new data shape: ", data.shape)
+
     data1 = pca(data, 100)
 
-    kmeans = KMeans(n_clusters = 30, max_iter=100)
+    #SPECIFY NUMBER OF CLUSTERS HERE
+    no_clusters = int(input("Number of clusters?: "))
+
+    kmeans = KMeans(n_clusters = no_clusters, max_iter=100)
     kmeans.fit(data1)
 
     print("Number of iterations: ",kmeans.n_iter_)
@@ -109,13 +125,13 @@ if __name__ == "__main__" :
     print("length of clusteredPts: ", len(clusteredPts))
 
     #Output original k-means data file:
-    with open("cluster_data_100d_1.csv", "w") as output0:
+    with open("cluster_data_100d_" + str(no_clusters) + "cl.csv", "w") as output0:
         writer = csv.writer(output0)
         for d in data:
             writer.writerow(d)
 
     #Output cluster labels (adpositions and case marker tokens)
-    with open("cluster_assignments_100d_1.csv", "w") as output :
+    with open("cluster_assignments_100d_" + str(no_clusters) + "cl.csv", "w") as output :
         writer = csv.writer(output)
         for cluster,indices in clusteredPts.items() :
             theRow = ["","Cluster "+str(cluster)]
@@ -128,17 +144,17 @@ if __name__ == "__main__" :
     #Plot in 2D
     data2 = pca(data, 100)
 
-    kmeans2 = KMeans(n_clusters = 30, max_iter=100)
+    kmeans2 = KMeans(n_clusters = no_clusters, max_iter=100)
     kmeans2.fit(data2)
     clusteredPts2 = {i: np.where(kmeans2.labels_ == i)[0] for i in range(kmeans2.n_clusters)}
 
-    with open("cluster_data_2D_1.csv", "w") as output0:
+    with open("cluster_data_2d_" + str(no_clusters) + "cl.csv", "w") as output0:
         writer = csv.writer(output0)
         for d in data2:
             writer.writerow(d)
 
     fig,zxes = plt.subplots(figsize=(50,50))
-    with open("cluster_assignments_2D_1.csv", "w") as output :
+    with open("cluster_assignments_2d_" + str(no_clusters) + "cl.csv", "w") as output :
         writer = csv.writer(output)
 
         for cluster,indices in clusteredPts2.items() :
@@ -153,4 +169,4 @@ if __name__ == "__main__" :
     centers = kmeans2.cluster_centers_
     plt.scatter(centers[:,0], centers[:,1], c='black', s=200, alpha=0.5)
 
-    plt.savefig("cluster_assignments_2D_3.png")
+    plt.savefig("cluster_assignments_2D_"+ str(no_clusters) + "cl.png")
