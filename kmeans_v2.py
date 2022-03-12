@@ -101,7 +101,8 @@ if __name__ == "__main__" :
     data = tensor.cpu().detach().numpy() #SOURCE: https://stackoverflow.com/questions/49768306/pytorch-tensor-to-numpy-array
     
     #reshape data, remove the dimension that has the weird 6 (1th dimension)
-    if ui == "FinBERT" :
+    #if ui == "FinBERT" :
+    if model_name == "FinBERT" : #replaced2/10/22
         print("Reshaping output of MaskedLMModel (FinBERT)... ")
         print("original data shape: ", data.shape)
         data = data.reshape(data.shape[0], data.shape[1]*data.shape[2])
